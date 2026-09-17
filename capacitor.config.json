@@ -1,0 +1,10 @@
+{
+  "appId": "com.liviu.geotrack",
+  "appName": "GeoTrackerGV",
+  "webDir": "www",
+  "plugins": {
+    "BackgroundGeolocation": {
+      "locationProvider": "ANDROID_ACTIVITY_PROVIDER"
+    }
+  }
+}

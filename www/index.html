@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="GeoTrackerGV — Locație live și timeline zilnic">
+  <meta name="theme-color" content="#0b0f19">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>GeoTrackerGV</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/map-styles.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="stylesheet" href="css/timeline-styles.css">
+  <link rel="stylesheet" href="css/friends-styles.css">
+
+  <!-- Capacitor Core (ignored on web) -->
+  <script src="capacitor.js"></script>
+</head>
+
+<body>
+
+  <!-- Status bar -->
+  <header id="status-bar">
+    <div class="status-left">
+      <div class="app-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2" />
+          <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z" stroke="currentColor"
+            stroke-width="2" fill="none" />
+        </svg>
+      </div>
+      <span class="app-name">GeoTrackerGV</span>
+    </div>
+    <div class="status-right">
+      <div id="tracking-badge" class="badge badge-inactive">
+        <span class="badge-dot"></span>
+        <span class="badge-text">Se pornește...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Map -->
+  <div id="map"></div>
+
+  <!-- Live info banner -->
+  <div id="live-banner" class="hidden">
+    <div class="banner-content">
+      <span class="banner-dot pulse"></span>
+      <span class="banner-text">Live</span>
+      <span id="viewer-count" class="banner-viewers"></span>
+    </div>
+  </div>
+
+  <!-- Map controls -->
+  <div id="map-controls">
+    <button id="btn-my-location" class="map-ctrl-btn" title="Locația mea">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="4" />
+        <line x1="12" y1="2" x2="12" y2="6" />
+        <line x1="12" y1="18" x2="12" y2="22" />
+        <line x1="2" y1="12" x2="6" y2="12" />
+        <line x1="18" y1="12" x2="22" y2="12" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Timeline panel -->
+  <div id="timeline-panel" class="panel hidden">
+    <div class="panel-header">
+      <div class="panel-drag-handle"></div>
+      <h2 class="panel-title">Timeline</h2>
+      <button id="close-timeline" class="panel-close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Date strip -->
+    <div id="date-strip" class="date-strip"></div>
+
+    <!-- Stats cards -->
+    <div id="timeline-stats" class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z" />
+          </svg>
+        </div>
+        <div class="stat-value" id="stat-points">0</div>
+        <div class="stat-label">Puncte GPS</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 9l7-7 7 7" />
+            <path d="M12 16V2" />
+            <path d="M3 20h18" />
+          </svg>
+        </div>
+        <div class="stat-value" id="stat-distance">0 km</div>
+        <div class="stat-label">Distanță</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12,6 12,12 16,14" />
+          </svg>
+        </div>
+        <div class="stat-value" id="stat-duration">0 min</div>
+        <div class="stat-label">Durată</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg>
+        </div>
+        <div class="stat-value" id="stat-speed">0 km/h</div>
+        <div class="stat-label">Viteză medie</div>
+      </div>
+    </div>
+
+    <!-- Timeline slider -->
+    <div id="timeline-slider-container" class="timeline-slider-container hidden">
+      <div class="slider-time-labels">
+        <span id="slider-start-time">00:00</span>
+        <span id="slider-current-time" class="slider-current">--:--</span>
+        <span id="slider-end-time">23:59</span>
+      </div>
+      <input type="range" id="timeline-slider" class="timeline-slider" min="0" max="100" value="100">
+    </div>
+
+    <!-- Timeline entries -->
+    <div id="timeline-entries" class="timeline-entries"></div>
+
+    <!-- Actions -->
+    <div class="timeline-actions">
+      <button id="btn-export" class="btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+          <polyline points="7,10 12,15 17,10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Exportă GPX
+      </button>
+      <button id="btn-delete-day" class="btn-danger">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3,6 5,6 21,6" />
+          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+        </svg>
+        Șterge ziua
+      </button>
+    </div>
+  </div>
+
+  <!-- Friends panel -->
+  <div id="friends-panel" class="panel hidden">
+    <div class="panel-header">
+      <div class="panel-drag-handle"></div>
+      <h2 class="panel-title">Prieteni</h2>
+      <button id="close-friends" class="panel-close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <div id="friends-list" class="friends-list">
+      <!-- Friend items will go here -->
+    </div>
+
+    <div class="timeline-actions" style="margin-top:auto;">
+      <button id="btn-add-friend" class="btn-primary" style="width:100%; border-radius:var(--radius-sm);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+          <circle cx="8.5" cy="7" r="4" />
+          <line x1="20" y1="8" x2="20" y2="14" />
+          <line x1="23" y1="11" x2="17" y2="11" />
+        </svg>
+        Adaugă Prieten / Vezi Codul Meu
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom navigation -->
+  <nav id="bottom-nav">
+    <button class="nav-item active" data-tab="live" id="nav-live">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="10" r="3" />
+        <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z" />
+      </svg>
+      <span>Live</span>
+    </button>
+    <button class="nav-item" data-tab="timeline" id="nav-timeline">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12,6 12,12 16,14" />
+      </svg>
+      <span>Timeline</span>
+    </button>
+    <button class="nav-item" data-tab="friends" id="nav-friends">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 00-3-3.87" />
+        <path d="M16 3.13a4 4 0 010 7.75" />
+      </svg>
+      <span>Prieteni</span>
+    </button>
+  </nav>
+
+  <!-- Connections modal -->
+  <div id="share-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Conexiuni P2P</h3>
+        <button id="close-share-modal" class="modal-close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Internal modal tabs -->
+        <div class="modal-tabs">
+          <button class="modal-tab active" data-modaltab="my-code">Codul Meu</button>
+          <button class="modal-tab" data-modaltab="follow">Urmărește</button>
+        </div>
+
+        <!-- "My code" section -->
+        <div id="tab-my-code" class="modal-tab-content">
+          <div class="share-info">
+            <p style="margin-bottom: 10px; font-size:14px;">1. Alege un nume pentru a fi recunoscut pe hartă:</p>
+            <input type="text" id="my-name-input" class="share-link-input" placeholder="Numele tău (ex: Liviu)"
+              style="text-align:center; font-size:16px; margin-bottom: 20px;">
+            <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin-bottom:20px;">
+
+            <div class="share-icon-container">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+            </div>
+            <p>2. Trimite acest cod prietenului tău pentru a te vedea live.</p>
+          </div>
+
+          <div class="share-link-container">
+            <div class="share-link-box">
+              <input type="text" id="share-link-input" readonly class="share-link-input"
+                style="text-align:center; font-size:18px; font-weight:bold; letter-spacing:1px;">
+              <button id="btn-copy-link" class="btn-copy" title="Copiază cod">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                </svg>
+              </button>
+            </div>
+            <div class="share-status" id="share-status-container">
+              <span class="share-status-dot pulse" id="share-status-dot"></span>
+              <span id="share-status-text">Activ — 0 persoane conectate</span>
+            </div>
+            <button id="btn-toggle-share" class="btn-primary"
+              style="width:100%; margin-top:16px; padding:12px; border-radius:var(--radius-sm); border:none; background:rgba(239, 68, 68, 0.2); color:var(--danger); font-weight:bold; font-size:15px; cursor:pointer; transition: 0.2s;">
+              Pune Pauză Partajării
+            </button>
+          </div>
+        </div>
+
+        <!-- "Follow" section -->
+        <div id="tab-follow" class="modal-tab-content hidden">
+          <div class="share-info">
+            <p>Introdu codul prietenului tău pentru a te conecta direct la el.</p>
+          </div>
+          <div class="share-link-container">
+            <div class="share-link-box">
+              <input type="text" id="friend-code-input" class="share-link-input" placeholder="Ex: geo-1a2b3c"
+                style="text-align:center; font-size:18px;">
+            </div>
+            <button id="btn-connect-friend" class="btn-primary"
+              style="width:100%; margin-top:16px; padding:12px; border-radius:var(--radius-sm); border:none; background:var(--accent-gradient); color:white; font-weight:bold; font-size:16px; cursor:pointer;">
+              Conectare P2P
+            </button>
+          </div>
+        </div>
+
+        <div class="share-privacy-note">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0110 0v4" />
+          </svg>
+          <span>Conexiune directă. Datele nu trec prin niciun server web.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="js/timeline.js"></script>
+  <!-- App modules (order matters!) -->
+  <script src="js/config.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/gps.js"></script>
+  <script src="js/peer.js"></script>
+  <script src="js/friends.js"></script>
+  <script src="js/timeline-ui.js"></script>
+  <script src="js/events.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+
+</html>

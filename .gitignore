@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# IDE & Editor folders
+.vscode/
+.idea/
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Android specific
+android/local.properties
+android/.gradle/
+android/.idea/
+android/app/build/
+android/build/
+android/captures/
+android/app/src/main/assets/public/
+
+# OS specific
+.DS_Store
+Thumbs.db
