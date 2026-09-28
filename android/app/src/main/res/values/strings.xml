@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">GeoTrackerGV</string>
     <string name="title_activity_main">GeoTrackerGV</string>
-    <string name="package_name">com.liviu.geotrack</string>
-    <string name="custom_url_scheme">com.liviu.geotrack</string>
+    <string name="package_name">com.geotrackergv.app</string>
+    <string name="custom_url_scheme">com.geotrackergv.app</string>
 </resources>
+
