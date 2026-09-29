@@ -74,7 +74,13 @@
     );
 
     if (latlngs.length > 1) {
-      state.map.fitBounds(state.timelinePolyline.getBounds(), { padding: [60, 60] });
+      const panel = document.getElementById('timeline-panel');
+      const panelHeight = (panel && window.innerWidth <= 768) ? (panel.offsetHeight || 400) : 0;
+
+      state.map.fitBounds(state.timelinePolyline.getBounds(), {
+        paddingTopLeft: [60, 60],
+        paddingBottomRight: [60, 60 + panelHeight]
+      });
     } else {
       state.map.setView(latlngs[0], CONFIG.LOCATION_ZOOM);
     }
