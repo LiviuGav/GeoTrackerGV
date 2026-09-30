@@ -118,11 +118,7 @@
     DOM.navItems.forEach(item => {
       item.addEventListener('click', () => {
         const tab = item.dataset.tab;
-        if (tab === state.activeTab && tab !== 'live') {
-          window.App.switchTab('live');
-        } else {
-          window.App.switchTab(tab);
-        }
+        window.App.switchTab(tab);
       });
     });
 

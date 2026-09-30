@@ -29,8 +29,8 @@
       DOM.timelineSliderContainer.classList.add('hidden');
     }
 
-    drawTimelineRoute(points);
     renderTimelineEntries(points);
+    drawTimelineRoute(points);
   }
 
   function drawTimelineRoute(points, upToIndex) {

@@ -41,13 +41,12 @@
 
     if (!silent) window.App.showToast('Se conectează la prieten...', 'info');
 
-    const conn = state.peer.connect(friendId);
+    const myName = localStorage.getItem('geotrack-my-name') || 'Anonim';
+    const conn = state.peer.connect(friendId, { metadata: { name: myName } });
     state.friendConns[friendId] = conn;
 
     conn.on('open', () => {
-      if (!silent) window.App.showToast('Conectat! Aștept locația...', 'success');
-      addFriendToList(friendId);
-      renderFriendsList();
+      if (!silent) window.App.showToast('În așteptarea acceptului...', 'info');
       if (!silent) {
         window.App.switchTab('live');
         window.App.closeShareModal();
@@ -56,8 +55,15 @@
 
     conn.on('data', (data) => {
       if (data.type === 'location') {
+        if (!state.savedFriends.includes(friendId)) {
+          if (!silent) window.App.showToast('Conexiune acceptată!', 'success');
+          addFriendToList(friendId);
+        }
         updateFriendMarker(friendId, data);
         renderFriendsList();
+      } else if (data.type === 'rejected') {
+        window.App.showToast('Cererea a fost respinsă de utilizator', 'error');
+        removeFriend(friendId);
       }
     });
 
@@ -154,7 +160,7 @@
 
   window.locateFriend = (friendId) => {
     if (state.friendMarkers[friendId]) {
-      window.App.switchTab('live');
+      document.getElementById('friends-panel').classList.add('hidden');
       state.map.setView(state.friendMarkers[friendId].getLatLng(), CONFIG.LOCATION_ZOOM);
       state.friendMarkers[friendId].openPopup();
     } else {

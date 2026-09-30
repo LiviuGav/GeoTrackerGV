@@ -316,6 +316,26 @@
       </div>
     </div>
   </div>
+  <!-- Auth modal -->
+  <div id="auth-modal" class="modal hidden" style="z-index: 10000;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="max-width: 320px; text-align: center;">
+      <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+        <h3 style="margin: 0; color: var(--primary);">Cerere de urmărire P2P</h3>
+      </div>
+      <div class="modal-body" style="padding-top: 15px;">
+        <p style="margin-bottom: 10px;">Un utilizator dorește să vă vadă locația live.</p>
+        <p style="font-weight: bold; font-family: monospace; font-size: 1.1em; color: var(--text); background: var(--bg); padding: 10px; border-radius: 8px; margin-bottom: 20px; word-break: break-all;"
+          id="auth-req-id">ID: ...</p>
+        <div style="display: flex; gap: 10px;">
+          <button id="btn-auth-reject" class="btn-secondary"
+            style="flex: 1; padding: 12px; font-weight: bold; border-radius: 8px;">Refuză</button>
+          <button id="btn-auth-accept" class="btn-primary"
+            style="flex: 1; padding: 12px; font-weight: bold; border-radius: 8px;">Acceptă</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Toast container -->
   <div id="toast-container"></div>

@@ -38,16 +38,74 @@
       updateViewerCount();
     });
 
-    state.peer.on('connection', (conn) => {
-      conn.on('open', () => {
-        state.connections.push(conn);
-        updateViewerCount();
+    function promptConnection(conn) {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('auth-modal');
+        const idEl = document.getElementById('auth-req-id');
+        const acceptBtn = document.getElementById('btn-auth-accept');
+        const rejectBtn = document.getElementById('btn-auth-reject');
 
-        if (state.currentPosition) {
-          conn.send({
-            type: 'location',
-            ...state.currentPosition
-          });
+        const reqName = (conn.metadata && conn.metadata.name) ? conn.metadata.name : 'Anonim';
+        idEl.textContent = `${reqName} (ID: ${conn.peer})`;
+        modal.classList.remove('hidden');
+
+        const cleanup = () => {
+          acceptBtn.removeEventListener('click', onAccept);
+          rejectBtn.removeEventListener('click', onReject);
+          modal.classList.add('hidden');
+        };
+
+        const onAccept = () => { cleanup(); resolve(true); };
+        const onReject = () => { cleanup(); resolve(false); };
+
+        acceptBtn.addEventListener('click', onAccept);
+        rejectBtn.addEventListener('click', onReject);
+      });
+    }
+
+    function getAllowedPeers() {
+      return JSON.parse(localStorage.getItem('geotrack-allowed-peers') || '[]');
+    }
+
+    function addAllowedPeer(id) {
+      const allowed = getAllowedPeers();
+      if (!allowed.includes(id)) {
+        allowed.push(id);
+        localStorage.setItem('geotrack-allowed-peers', JSON.stringify(allowed));
+      }
+    }
+
+    state.peer.on('connection', (conn) => {
+      conn.on('open', async () => {
+        const allowed = getAllowedPeers();
+        let accepted = false;
+
+        if (allowed.includes(conn.peer)) {
+          accepted = true;
+          window.App.showToast('Conexiune auto-acceptată', 'success');
+        } else {
+          accepted = await promptConnection(conn);
+          if (accepted) {
+            addAllowedPeer(conn.peer);
+            window.App.showToast('Conexiune acceptată', 'success');
+          } else {
+            window.App.showToast('Cerere respinsă', 'info');
+          }
+        }
+
+        if (accepted) {
+          state.connections.push(conn);
+          updateViewerCount();
+
+          if (state.currentPosition) {
+            conn.send({
+              type: 'location',
+              ...state.currentPosition
+            });
+          }
+        } else {
+          conn.send({ type: 'rejected' });
+          setTimeout(() => conn.close(), 500);
         }
       });
 

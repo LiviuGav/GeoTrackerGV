@@ -109,7 +109,7 @@
     state.currentPosition = { lat: lat, lng: lng, accuracy: accuracy, speed: speed, altitude: altitude, heading: heading, timestamp: timestamp };
 
     // Update map
-    if (state.activeTab === 'live') {
+    if (state.activeTab !== 'timeline') {
       window.App.updateUserMarker([lat, lng], accuracy);
     }
 

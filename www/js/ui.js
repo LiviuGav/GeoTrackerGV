@@ -26,8 +26,26 @@
     state.activeTab = tab;
     DOM.navItems.forEach(item => item.classList.toggle('active', item.dataset.tab === tab));
 
+    if (state.map) {
+      state.map.closePopup();
+    }
+
     DOM.timelinePanel.classList.add('hidden');
     DOM.friendsPanel.classList.add('hidden');
+
+    if (tab === 'timeline') {
+      if (state.userMarker) state.map.removeLayer(state.userMarker);
+      if (state.accuracyCircle) state.map.removeLayer(state.accuracyCircle);
+      if (state.friendMarkers) {
+        Object.values(state.friendMarkers).forEach(m => state.map.removeLayer(m));
+      }
+    } else {
+      if (state.userMarker) state.userMarker.addTo(state.map);
+      if (state.accuracyCircle) state.accuracyCircle.addTo(state.map);
+      if (state.friendMarkers) {
+        Object.values(state.friendMarkers).forEach(m => m.addTo(state.map));
+      }
+    }
 
     if (tab === 'timeline') {
       DOM.timelinePanel.classList.remove('hidden');
@@ -37,11 +55,15 @@
       window.App.clearTimelineRoute();
       if (state.currentPosition) {
         window.App.updateUserMarker([state.currentPosition.lat, state.currentPosition.lng], state.currentPosition.accuracy);
-        state.map.setView([state.currentPosition.lat, state.currentPosition.lng], state.map.getZoom());
+        state.map.setView([state.currentPosition.lat, state.currentPosition.lng], CONFIG.LOCATION_ZOOM);
       }
     } else if (tab === 'friends') {
+      window.App.clearTimelineRoute();
       DOM.friendsPanel.classList.remove('hidden');
       window.App.renderFriendsList();
+      if (state.currentPosition) {
+        window.App.updateUserMarker([state.currentPosition.lat, state.currentPosition.lng], state.currentPosition.accuracy);
+      }
     }
   }
 
